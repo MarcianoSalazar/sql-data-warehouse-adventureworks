@@ -1,6 +1,22 @@
-SELECT * FROM AdventureWorks2025.Production.Product
+/*
+--------------------------------------------
+DDL Scripts: Create Bronze Tables
+--------------------------------------------
+Script Purpose:
+    This script create tables in the bronze 
+    schema and drop the table if it is 
+    already exists
+
+Note:
+    Run this script to redefine the structure
+    of bronze tables
+---------------------------------------------
+*/
 
 
+IF OBJECT_ID('bronze.aw_customer', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_customer;
+GO
 CREATE TABLE bronze.aw_customer (
     customer_id     INT,
     person_id       INT,
@@ -13,6 +29,9 @@ CREATE TABLE bronze.aw_customer (
 GO
 
 
+IF OBJECT_ID('bronze.aw_person', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_person
+GO
 CREATE TABLE bronze.aw_person (
     business_entity_id          INT,
     person_type                 NCHAR(2),
@@ -30,6 +49,10 @@ CREATE TABLE bronze.aw_person (
 );
 GO
 
+
+IF OBJECT_ID('bronze.aw_product', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_product
+GO
 
 CREATE TABLE bronze.aw_product (
     product_id                 INT,
@@ -60,6 +83,12 @@ CREATE TABLE bronze.aw_product (
 );
 GO
 
+
+
+IF OBJECT_ID('bronze.aw_product_subcategory', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_product_subcategory
+GO
+
 CREATE TABLE bronze.aw_product_subcategory (
     product_subcategory_id     INT,
     product_category_id        INT,
@@ -70,12 +99,21 @@ CREATE TABLE bronze.aw_product_subcategory (
 GO
 
 
+IF OBJECT_ID('bronze.aw_product_category', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_product_category
+GO
+
 CREATE TABLE bronze.aw_product_category (
     product_category_id        INT,
     name                       NVARCHAR(50),
     rowguid                    UNIQUEIDENTIFIER,
     modified_date              DATETIME
 );
+GO
+
+
+IF OBJECT_ID('bronze.aw_sales_territory', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_sales_territory
 GO
 
 CREATE TABLE bronze.aw_sales_territory (
@@ -92,6 +130,11 @@ CREATE TABLE bronze.aw_sales_territory (
 );
 GO
 
+
+IF OBJECT_ID('bronze.aw_sales_person', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_sales_person
+GO
+
 CREATE TABLE bronze.aw_sales_person (
     business_entity_id         INT,
     territory_id               INT,
@@ -103,6 +146,11 @@ CREATE TABLE bronze.aw_sales_person (
     rowguid                    UNIQUEIDENTIFIER,
     modified_date              DATETIME
 );
+GO
+
+
+IF OBJECT_ID('bronze.aw_employee', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_employee
 GO
 
 CREATE TABLE bronze.aw_employee (
@@ -123,6 +171,11 @@ CREATE TABLE bronze.aw_employee (
     rowguid                    UNIQUEIDENTIFIER,
     modified_date              DATETIME
 );
+GO
+
+
+IF OBJECT_ID('bronze.aw_sales_order_header', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_sales_order_header
 GO
 
 CREATE TABLE bronze.aw_sales_order_header (
