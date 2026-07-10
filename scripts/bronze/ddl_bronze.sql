@@ -207,3 +207,23 @@ CREATE TABLE bronze.aw_sales_order_header (
     modified_date            DATETIME
 );
 GO
+
+
+IF OBJECT_ID('bronze.aw_sales_order_detail', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_sales_order_detail;
+GO
+
+CREATE TABLE bronze.aw_sales_order_detail (
+    sales_order_id            INT,
+    sales_order_detail_id     INT,
+    carrier_tracking_number   NVARCHAR(25),
+    order_qty                 SMALLINT,
+    product_id                INT,
+    special_offer_id          INT,
+    unit_price                MONEY,
+    unit_price_discount       MONEY,
+    line_total                MONEY,
+    rowguid                   UNIQUEIDENTIFIER,
+    modified_date             DATETIME
+);
+GO
