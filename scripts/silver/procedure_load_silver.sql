@@ -17,8 +17,11 @@ WHERE customer_id IS NOT NULL;
 
 SELECT
     business_entity_id,
-    first_name,
-    middle_name,
+    NULLIF(TRIM(first_name), '') AS first_name,
+    CASE
+        WHEN NULLIF(TRIM(middle_name), '') IS NULL THEN NULL
+        ELSE CONCAT(LEFT(TRIM(middle_name), 1), '.')
+    END AS middle_name,    
     last_name,
     suffix
 FROM bronze.aw_person
