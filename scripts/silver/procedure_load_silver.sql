@@ -26,4 +26,15 @@ SELECT
     NULLIF(TRIM(suffix), '') AS suffix
 FROM bronze.aw_person
 
+SELECT
+    product_id,
+    name,
+    product_number,
+    color, 
+    standard_cost,
+    list_price,
+    size,
+    product_subcategory_id
+FROM bronze.aw_product
+
 SELECT * FROM bronze.aw_person
