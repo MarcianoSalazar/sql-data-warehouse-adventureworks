@@ -22,8 +22,8 @@ SELECT
         WHEN NULLIF(TRIM(middle_name), '') IS NULL THEN NULL
         ELSE CONCAT(LEFT(TRIM(middle_name), 1), '.')
     END AS middle_name,    
-    last_name,
-    suffix
+    NULLIF(TRIM(last_name), '') AS last_name,
+    NULLIF(TRIM(suffix), '') AS suffix
 FROM bronze.aw_person
 
 SELECT * FROM bronze.aw_person
