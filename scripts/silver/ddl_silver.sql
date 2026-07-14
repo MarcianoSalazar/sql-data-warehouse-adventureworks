@@ -128,7 +128,6 @@ GO
 
 CREATE TABLE silver.aw_sales_order_header (
     sales_order_id           INT,
-    revision_number          TINYINT,
     order_date               DATETIME,
     customer_id              INT,
     sales_person_id          INT,
