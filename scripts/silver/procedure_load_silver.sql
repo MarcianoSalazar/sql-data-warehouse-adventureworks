@@ -167,3 +167,29 @@ SELECT
 FROM bronze.aw_sales_order_header
 WHERE sales_order_id IS NOT NULL;
 GO
+
+
+-- Sales Order Detail
+TRUNCATE TABLE silver.aw_sales_order_detail;
+GO
+
+INSERT INTO silver.aw_sales_order_detail (
+    sales_order_id,
+    sales_order_detail_id,
+    order_qty,
+    product_id,
+    unit_price,
+    unit_price_discount,
+    line_total
+)
+SELECT
+    sales_order_id,
+    sales_order_detail_id,
+    order_qty,
+    product_id,
+    unit_price,
+    ISNULL(unit_price_discount, 0) AS unit_price_discount,
+    line_total
+FROM bronze.aw_sales_order_detail
+WHERE sales_order_detail_id IS NOT NULL;
+GO
