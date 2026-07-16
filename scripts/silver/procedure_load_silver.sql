@@ -218,8 +218,26 @@ BEGIN
         SET @end_time = GETDATE();
         PRINT 'LOAD DURATION: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
         PRINT '===================================';
+    
+                -- ===== silver.aw_store =====
+        SET @start_time = GETDATE();
+        PRINT '=>> TRUNCATING TABLE: silver.aw_store';
+        TRUNCATE TABLE silver.aw_store;
+        PRINT '=>> INSERTING DATA INTO: silver.aw_store';
+        INSERT INTO silver.aw_store (
+            business_entity_id, name, sales_person_id
+        )
+        SELECT
+            business_entity_id,
+            TRIM(name) AS name,
+            sales_person_id
+        FROM bronze.aw_store
+        WHERE business_entity_id IS NOT NULL;
+        SET @end_time = GETDATE();
+        PRINT 'LOAD DURATION: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+        PRINT '===================================';
 
-
+        
         SET @batch_end_time = GETDATE();
         PRINT '';
         PRINT '';
