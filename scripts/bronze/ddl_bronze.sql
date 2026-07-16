@@ -227,3 +227,18 @@ CREATE TABLE bronze.aw_sales_order_detail (
     modified_date             DATETIME
 );
 GO
+
+
+IF OBJECT_ID('bronze.aw_store', 'U') IS NOT NULL
+    DROP TABLE bronze.aw_store;
+GO
+
+CREATE TABLE bronze.aw_store (
+    business_entity_id     INT,
+    name                   NVARCHAR(50),
+    sales_person_id         INT,
+    demographics            XML,
+    rowguid                 UNIQUEIDENTIFIER,
+    modified_date           DATETIME
+);
+GO
