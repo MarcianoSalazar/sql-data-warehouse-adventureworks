@@ -57,6 +57,7 @@ GO
 
 
 
+    
 -- Create Dimension: gold.dim_products
 IF OBJECT_ID('gold.dim_sales_persons', 'V') IS NOT NULL
     DROP VIEW gold.dim_sales_persons;
@@ -79,3 +80,106 @@ LEFT JOIN silver.aw_person AS p
 GO
 
 
+    
+
+-- Create Dimension: gold.dim_dates
+IF OBJECT_ID('gold.dim_dates', 'U') IS NOT NULL
+    DROP TABLE gold.dim_date;
+GO
+
+CREATE TABLE gold.dim_dates (
+    date_key INT PRIMARY KEY,
+    full_date DATE,
+    day TINYINT,
+    month TINYINT,
+    month_name VARCHAR(20),
+    quarter TINYINT,
+    year SMALLINT,
+    day_of_week VARCHAR(20),
+    week_of_year TINYINT
+);
+GO
+WITH date_spine AS (
+    SELECT CAST('2022-05-30' AS DATE) AS full_date
+    UNION ALL
+    SELECT DATEADD(DAY, 1, full_date)
+    FROM date_spine
+    WHERE full_date < '2025-06-29'
+)
+INSERT INTO gold.dim_dates (
+    date_key,
+    full_date,
+    day,
+    month,
+    month_name,
+    quarter,
+    year,
+    day_of_week,
+    week_of_year
+)
+SELECT
+    CONVERT(INT, FORMAT(full_date, 'yyyyMMdd')),
+    full_date,
+    DAY(full_date),
+    MONTH(full_date),
+    DATENAME(MONTH, full_date),
+    DATEPART(QUARTER, full_date),
+    YEAR(full_date),
+    DATENAME(WEEKDAY, full_date),
+    DATEPART(WEEK, full_date)
+FROM date_spine
+OPTION (MAXRECURSION 0);
+GO
+
+
+
+    
+-- Create Dimension: gold.dim_territory
+IF OBJECT_ID('gold.dim_territory', 'V') IS NOT NULL
+    DROP VIEW gold.dim_territory;
+GO
+CREATE VIEW gold.dim_territory AS 
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY territory_id) AS territory_key,
+    territory_id,
+    name,
+    country_region_code,
+    group_name
+FROM silver.aw_sales_territory;
+GO
+
+
+
+
+-- Create Facts: gold.fact_sales
+IF OBJECT_ID('gold.fact_sales', 'V') IS NOT NULL
+    DROP VIEW gold.fact_sales;
+GO
+CREATE VIEW gold.fact_sales AS 
+SELECT
+    soh.sales_order_id,
+    sod.sales_order_detail_id,
+    CONVERT(INT, FORMAT(soh.order_date, 'yyyyMMdd')) AS date_key,
+    c.customer_key,
+    p.product_key,
+    sp.sales_person_key,
+    t.territory_key,    
+    sod.order_qty AS  order_quantity,
+    sod.unit_price,
+    sod.unit_price_discount,
+    sod.line_total AS sales_amount,
+    p.standard_cost,
+    p.standard_cost * sod.order_qty AS total_product_cost,
+    (sod.line_total - (p.standard_cost * sod.order_qty)) AS gross_profit
+FROM silver.aw_sales_order_header AS soh
+LEFT JOIN silver.aw_sales_order_detail AS sod
+    ON  soh.sales_order_id = sod.sales_order_id
+LEFT JOIN gold.dim_customers AS c
+    ON soh.customer_id = c.customer_id
+LEFT JOIN gold.dim_products AS p
+    ON sod.product_id = p.product_id
+LEFT JOIN gold.dim_sales_persons AS sp
+    ON soh.sales_person_id = sp.sales_person_id
+LEFT JOIN gold.dim_territory AS t
+    ON soh.territory_id = t.territory_id
+GO
