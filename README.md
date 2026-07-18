@@ -77,10 +77,10 @@ sql-datawarehouse-project-with-adventureworks/
 ├── datasets/                        # Raw AdventureWorks source data (if applicable)
 │
 ├── docs/                            # Project documentation and architecture details
-│   ├── data_architecture.drawio     # Draw.io file showing the project's architecture
+│   ├── data_architecture.png        # Draw.io file showing the project's architecture
 │   ├── data_catalog.md              # Catalog of datasets, including field descriptions and metadata
-│   ├── data_flow.drawio             # Draw.io file for the data flow diagram
-│   ├── data_models.drawio           # Draw.io file for data models (star schema)
+│   ├── data_flow.png                # Draw.io file for the data flow diagram
+│   ├── data_models.png              # Draw.io file for data models (star schema)
 │   ├── naming_conventions.md        # Consistent naming guidelines for tables, columns, and files
 │
 ├── scripts/                         # SQL scripts for ETL and transformations
@@ -89,6 +89,8 @@ sql-datawarehouse-project-with-adventureworks/
 │   ├── gold/                        # Scripts for creating analytical models (star schema)
 │
 ├── tests/                           # Test scripts and data quality checks
+│   ├── silver_check/                # Scripts for validation and data quality checks
+│   ├── gold_check/                  # Scripts for validation and data quality checks
 │
 ├── README.md                        # Project overview and instructions
 ├── LICENSE                          # License information for the repository
