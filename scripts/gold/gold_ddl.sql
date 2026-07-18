@@ -1,3 +1,30 @@
+/*
+===============================================================================
+DDL Script: Create Gold Views and Tables
+===============================================================================
+Script Purpose:
+    This script creates the Gold layer objects in the 'gold' schema.
+    Existing views and tables are dropped before being recreated to ensure
+    the latest dimensional model is applied.
+
+    The Gold layer organizes cleaned Silver layer data into a Star Schema
+    consisting of dimension tables and a fact table for analytics and reporting.
+
+Objects Created:
+    - gold.dim_customers
+    - gold.dim_products
+    - gold.dim_sales_persons
+    - gold.dim_dates
+    - gold.dim_territory
+    - gold.fact_sales
+
+Usage:
+    Run this script after the Silver layer has been successfully loaded to
+    create the analytical model for BI tools and reporting.
+===============================================================================
+*/
+
+
 
 -- Create Dimension: gold.dim_customers
 IF OBJECT_ID('gold.dim_customers', 'V') IS NOT NULL
