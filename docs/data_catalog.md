@@ -133,12 +133,6 @@ The Gold Layer is the business-level data representation of the Sales Data Mart,
 
 ---
 
-## Star Schema Diagram
-
-```
-![Sales Data Mart Star Schema](docs/data_model.png)
-```
-
 ## Relationship Summary
 
 | Fact Column | Dimension | Dimension Key |
