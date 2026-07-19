@@ -1,0 +1,477 @@
+
+DIMENSION TABLES:		SOURCE TABLES:	
+------------------------------------------------------------------------------------------------------
+dim_customer			Sales.Customer + Person.Person + Sales.Store
+dim_product			Production.Product + Production.ProductSubcategory + Production.ProductCategory
+dim_date			Wala sa source — gagawin mo mismo (date spine)
+dim_territory			Sales.SalesTerritory
+dim_sales_person		Sales.SalesPerson + HumanResources.Employee + Person.Person
+
+
+
+
+DimDate (Field Name):✅
+DateKey
+FullDate
+Day
+Month
+MonthName
+Quarter
+Year
+DayOfWeek
+WeekOfYear
+
+
+
+DimCustomer (Field Name):✅
+CustomerKey
+CustomerID
+Name
+CustomerType
+
+
+
+
+DimProduct (Field Name):✅
+ProductKey
+ProductID
+ProductName
+ProductNumber
+Color
+Size
+StandardCost
+ListPrice
+Subcategory
+Category
+
+
+
+DimSalesPerson (Field Name): ✅
+SalesPersonKey
+SalesPersonID
+FullName
+JobTitle
+
+
+DimTerritory (Field Name):✅
+TerritoryKey
+TerritoryID
+TerritoryName
+Country
+Region
+Group
+
+
+
+
+
+
+
+
+
+fact_sales (Field Name):✅
+
+Field Name (Aliased):		   |	Description:
+---------------------------------------------------------------
+SalesKey		   |	Surrogate Key (Primary Key)
+SalesOrderID		   |	Original Order ID	
+SalesOrderDetailID	   |	Original Order Detail ID
+DateKey		   	   |	FK → DimDate
+CustomerKey		   |	FK → DimCustomer
+ProductKey		   |	FK → DimProduct
+SalesPersonKey	  	   |	FK → DimSalesPerson
+TerritoryKey		   |	FK → DimTerritory	      	   
+OrderQuantity	 	   |	Quantity sold
+UnitPrice		   |	Price per item
+UnitPriceDiscount	   |	Discount per item
+SalesAmount		   |	Total sales amount
+TotalProductCost	   |	Total cost
+GrossProfit		   |	SalesAmount − TotalProductCost
+
+
+
+
+
+
+
+Mapping Document: before I start building the Silver and Gold layers.
+
+Instead of guessing which columns to clean, I explicitly map:
+
+* Which source column is used
+* Which Gold column it becomes
+* Whether it's transformed
+* Whether it's excluded
+
+
+
+bronze.aw_customer:
+
+| Source Column | Used? | Target                   | Notes                      |
+| ------------- | :---: | ------------------------ | -------------------------- |
+| CustomerID    |   ✅   | DimCustomer.CustomerID   | Business key               |
+| PersonID      |   ✅   | Join → Person.Person     | Get customer name          |
+| StoreID       |   ✅   | CustomerType             | Determine Individual/Store |
+| TerritoryID   |   ✅   | FactSales / DimTerritory | Foreign key                |
+| AccountNumber |   ❌   | X                        | Not needed                 |
+| rowguid       |   ❌   | X                        | Not needed                 |
+| ModifiedDate  |   ❌   | X                        | Not needed                 |
+
+
+bronze.aw_person (for Customer):
+
+| Source Column         | Used? | Target                | Notes                       |
+| --------------------- | :---: | --------------------- | --------------------------- |
+| BusinessEntityID      |   ✅   | Join                  | Join with Customer.PersonID |
+| PersonType            |   ❌   | X                     | Not needed                  |
+| NameStyle             |   ❌   | X                     | Not needed                  |
+| Title                 |   ❌   | X                     | Not needed                  |
+| FirstName             |   ✅   | DimCustomer.FirstName | Keep                        |
+| MiddleName            |   ✅   | X                     | Not needed                  |
+| LastName              |   ✅   | DimCustomer.LastName  | Keep                        |
+| Suffix                |   ✅   | X                     | Not needed                  |
+| EmailPromotion        |   ❌   | X                     | Not needed                  |
+| AdditionalContactInfo |   ❌   | X                     | Not needed                  |
+| Demographics          |   ❌   | X                     | Not needed                  |
+| rowguid               |   ❌   | X                     | Not needed                  |
+| ModifiedDate          |   ❌   | X                     | Not needed                  |
+
+
+
+bronze.aw_product:
+
+| Source Column         | Used? | Target               | Notes                      |
+| --------------------- | :---: | -------------------- | -------------------------- |
+| ProductID             |   ✅   | DimProduct.ProductID | Business key               |
+| Name                  |   ✅   | ProductName          | Rename                     |
+| ProductNumber         |   ✅   | ProductNumber        | Keep                       |
+| MakeFlag              |   ❌   | X                    | Not needed                 |
+| FinishedGoodsFlag     |   ❌   | X                    | Not needed                 |
+| Color                 |   ✅   | Color                | Keep                       |
+| SafetyStockLevel      |   ❌   | X                    | Not needed                 |
+| ReorderPoint          |   ❌   | X                    | Not needed                 |
+| StandardCost          |   ✅   | StandardCost         | Keep                       |
+| ListPrice             |   ✅   | ListPrice            | Keep                       |
+| Size                  |   ✅   | Size                 | Keep                       |
+| SizeUnitMeasureCode   |   ❌   | X                    | Not needed                 |
+| WeightUnitMeasureCode |   ❌   | X                    | Not needed                 |
+| Weight                |   ❌   | X                    | Not needed                 |
+| DaysToManufacture     |   ❌   | X                    | Not needed                 |
+| ProductLine           |   ❌   | X                    | Not needed                 |
+| Class                 |   ❌   | X                    | Not needed                 |
+| Style                 |   ❌   | X                    | Not needed                 |
+| ProductSubcategoryID  |   ✅   | Join                 | Join to ProductSubcategory |
+| ProductModelID        |   ❌   | X                    | Not needed                 |
+| SellStartDate         |   ❌   | X                    | Not needed                 |
+| SellEndDate           |   ❌   | X                    | Not needed                 |
+| DiscontinuedDate      |   ❌   | X                    | Not needed                 |
+| rowguid               |   ❌   | X                    | Not needed                 |
+| ModifiedDate          |   ❌   | X                    | Not needed                 |
+
+
+bronze.aw_product_subcategory:
+
+| Source Column        | Used? | Target      | Notes             |
+| -------------------- | :---: | ----------- | ----------------- |
+| ProductSubcategoryID |   ✅   | Join        | Join from Product |
+| ProductCategoryID    |   ✅   | Join        | Join to Category  |
+| Name                 |   ✅   | Subcategory | Rename            |
+| rowguid              |   ❌   | X           | Not needed        |
+| ModifiedDate         |   ❌   | X           | Not needed        |
+
+
+bronze.aw_product_category:
+
+| Source Column     | Used? | Target   | Notes           |
+| ----------------- | :---: | -------- | --------------- |
+| ProductCategoryID |   ✅   | Join     | Parent category |
+| Name              |   ✅   | Category | Rename          |
+| rowguid           |   ❌   | X        | Not needed      |
+| ModifiedDate      |   ❌   | X        | Not needed      |
+
+
+
+bronze.aw_sales_territory:
+
+| Source Column     | Used? | Target        | Notes                       |
+| ----------------- | :---: | ------------- | --------------------------- |
+| TerritoryID       |   ✅   | TerritoryID   | Business key                |
+| Name              |   ✅   | TerritoryName | Rename                      |
+| CountryRegionCode |   ✅   | Country       | Rename                      |
+| Group             |   ✅   | Region/Group  | Rename based on your design |
+| SalesYTD          |   ❌   | X             | Fact not dimension          |
+| SalesLastYear     |   ❌   | X             | Not needed                  |
+| CostYTD           |   ❌   | X             | Not needed                  |
+| CostLastYear      |   ❌   | X             | Not needed                  |
+| rowguid           |   ❌   | X             | Not needed                  |
+| ModifiedDate      |   ❌   | X             | Not needed                  |
+
+
+bronze.aw_sales_person:
+
+| Source Column    | Used? | Target        | Notes                 |
+| ---------------- | :---: | ------------- | --------------------- |
+| BusinessEntityID |   ✅   | SalesPersonID | Business key          |
+| TerritoryID      |   ✅   | Join          | Optional relationship |
+| SalesQuota       |   ❌   | X             | Not needed            |
+| Bonus            |   ❌   | X             | Not needed            |
+| CommissionPct    |   ❌   | X             | Not needed            |
+| SalesYTD         |   ❌   | X             | Not needed            |
+| SalesLastYear    |   ❌   | X             | Not needed            |
+| rowguid          |   ❌   | X             | Not needed            |
+| ModifiedDate     |   ❌   | X             | Not needed            |
+
+
+
+bronze.aw_employee:
+
+| Source Column     | Used? | Target   | Notes               |
+| ----------------- | :---: | -------- | ------------------- |
+| BusinessEntityID  |   ✅   | Join     | Join to SalesPerson |
+| NationalIDNumber  |   ❌   | X        | Not needed          |
+| LoginID           |   ❌   | X        | Not needed          |
+| OrganizationNode  |   ❌   | X        | Not needed          |
+| OrganizationLevel |   ❌   | X        | Not needed          |
+| JobTitle          |   ✅   | JobTitle | Keep                |
+| BirthDate         |   ❌   | X        | Not needed          |
+| MaritalStatus     |   ❌   | X        | Not needed          |
+| Gender            |   ❌   | X        | Not needed          |
+| HireDate          |   ❌   | X        | Not needed          |
+| SalariedFlag      |   ❌   | X        | Not needed          |
+| VacationHours     |   ❌   | X        | Not needed          |
+| SickLeaveHours    |   ❌   | X        | Not needed          |
+| CurrentFlag       |   ❌   | X        | Not needed          |
+| rowguid           |   ❌   | X        | Not needed          |
+| ModifiedDate      |   ❌   | X        | Not needed          |
+
+
+
+bronze.aw_person (for SalesPerson):
+
+| Source Column         | Used? | Target   | Notes              |
+| --------------------- | :---: | -------- | ------------------ |
+| BusinessEntityID      |   ✅   | Join     | Join with Employee |
+| FirstName             |   ✅   | FullName | Build FullName     |
+| LastName              |   ✅   | FullName | Build FullName     |
+| All remaining columns |   ❌   | X        | Not needed         |
+
+
+
+DimDate: 
+
+You'll generate it yourself from a date range (date spine).
+
+| Column     | Source                |
+| ---------- | --------------------- |
+| DateKey    | Generated             |
+| FullDate   | Generated             |
+| Day        | Derived from FullDate |
+| Month      | Derived from FullDate |
+| MonthName  | Derived from FullDate |
+| Quarter    | Derived from FullDate |
+| Year       | Derived from FullDate |
+| DayOfWeek  | Derived from FullDate |
+| WeekOfYear | Derived from FullDate |
+
+
+
+
+
+
+
+
+
+bronze.aw_sales_order_header:
+
+| Source Column          | Used? | Target                 | Notes                  |
+| ---------------------- | :---: | ---------------------- | ---------------------- |
+| SalesOrderID           |   ✅   | FactSales.SalesOrderID | Business key           |
+| OrderDate              |   ✅   | DateKey                | Join to DimDate        |
+| DueDate                |   ❌   | X                      | Not needed             |
+| ShipDate               |   ❌   | X                      | Not needed             |
+| CustomerID             |   ✅   | CustomerKey            | Join to DimCustomer    |
+| SalesPersonID          |   ✅   | SalesPersonKey         | Join to DimSalesPerson |
+| TerritoryID            |   ✅   | TerritoryKey           | Join to DimTerritory   |
+| BillToAddressID        |   ❌   | X                      | Not needed             |
+| ShipToAddressID        |   ❌   | X                      | Not needed             |
+| ShipMethodID           |   ❌   | X                      | Not needed             |
+| CreditCardID           |   ❌   | X                      | Not needed             |
+| CreditCardApprovalCode |   ❌   | X                      | Not needed             |
+| CurrencyRateID         |   ❌   | X                      | Not needed             |
+| SubTotal               |   ❌   | X                      | Derived from details   |
+| TaxAmt                 |   ❌   | X                      | Not needed             |
+| Freight                |   ❌   | X                      | Not needed             |
+| TotalDue               |   ❌   | X                      | Not needed             |
+| Comment                |   ❌   | X                      | Not needed             |
+| rowguid                |   ❌   | X                      | Not needed             |
+| ModifiedDate           |   ❌   | X                      | Not needed             |
+
+
+
+
+bronze.aw_sales_order_detail:
+
+| Source Column         | Used? | Target                       | Notes              |
+| --------------------- | :---: | ---------------------------- | ------------------ |
+| SalesOrderID          |   ✅   | Join                         | Join to Header     |
+| SalesOrderDetailID    |   ✅   | FactSales.SalesOrderDetailID | Business key       |
+| CarrierTrackingNumber |   ❌   | X                            | Not needed         |
+| OrderQty              |   ✅   | OrderQuantity                | Keep               |
+| ProductID             |   ✅   | ProductKey                   | Join to DimProduct |
+| SpecialOfferID        |   ❌   | X                            | Not needed         |
+| UnitPrice             |   ✅   | UnitPrice                    | Keep               |
+| UnitPriceDiscount     |   ✅   | UnitPriceDiscount            | Keep               |
+| LineTotal             |   ✅   | LineTotal                    | Keep               |
+| rowguid               |   ❌   | X                            | Not needed         |
+| ModifiedDate          |   ❌   | X                            | Not needed         |
+
+
+---
+
+
+But AdventureWorks doesn't have a 'Profit' column.
+
+You'll calculate it during your ETL.
+
+For example:
+Profit = LineTotal - (OrderQty × StandardCost)
+
+
+So your mapping would look like this:
+
+| Fact Column | Source     |
+| ----------- | ---------- |
+| Profit      | Calculated |
+
+
+
+entire project should look
+
+AdventureWorks
+│
+├── Sales.Customer
+├── Person.Person
+├── Production.Product
+├── Production.ProductSubcategory
+├── Production.ProductCategory
+├── Sales.SalesOrderHeader
+├── Sales.SalesOrderDetail
+├── Sales.SalesPerson
+├── HumanResources.Employee
+└── Sales.SalesTerritory
+          │
+          ▼
+       Silver
+          │
+          ▼
+       Gold
+├── DimCustomer
+├── DimProduct
+├── DimDate
+├── DimSalesPerson
+├── DimTerritory
+└── FactSales
+
+
+
+
+
+# ETL Specification
+
+## DimCustomer
+
+| Source Table   | Source Column        | Used? | Gold Table  | Gold Column  | Transformation                                  | Quality Check          |
+| -------------- | -------------------- | :---: | ----------- | ------------ | ----------------------------------------------- | ---------------------- |
+| Sales.Customer | CustomerID           |   ✅   | DimCustomer | CustomerID   | None                                            | NULL, Duplicate        |
+| Sales.Customer | PersonID             |   ✅   | DimCustomer | Join         | Join to Person.Person                           | Orphan                 |
+| Sales.Customer | StoreID              |   ✅   | DimCustomer | CustomerType | CASE (StoreID IS NULL = Individual, ELSE Store) | None                   |
+| Sales.Customer | TerritoryID          |   ✅   | FactSales   | TerritoryKey | Lookup to DimTerritory                          | Orphan                 |
+| Person.Person  | BusinessEntityID     |   ✅   | DimCustomer | Join         | Join with PersonID                              | Duplicate              |
+| Person.Person  | FirstName            |   ✅   | DimCustomer | FirstName    | TRIM                                            | NULL (optional), Blank |
+| Person.Person  | LastName             |   ✅   | DimCustomer | LastName     | TRIM                                            | NULL (optional), Blank |
+| Person.Person  | FirstName + LastName |   ✅   | DimCustomer | FullName     | Concatenate                                     | None                   |
+
+---
+
+## DimProduct
+
+| Source Table                  | Source Column        | Used? | Gold Table | Gold Column   | Transformation             | Quality Check   |
+| ----------------------------- | -------------------- | :---: | ---------- | ------------- | -------------------------- | --------------- |
+| Production.Product            | ProductID            |   ✅   | DimProduct | ProductID     | None                       | NULL, Duplicate |
+| Production.Product            | Name                 |   ✅   | DimProduct | ProductName   | TRIM                       | NULL            |
+| Production.Product            | ProductNumber        |   ✅   | DimProduct | ProductNumber | TRIM                       | NULL, Duplicate |
+| Production.Product            | Color                |   ✅   | DimProduct | Color         | Standardize NULL → Unknown | None            |
+| Production.Product            | Size                 |   ✅   | DimProduct | Size          | Standardize NULL → Unknown | None            |
+| Production.Product            | StandardCost         |   ✅   | DimProduct | StandardCost  | None                       | >= 0            |
+| Production.Product            | ListPrice            |   ✅   | DimProduct | ListPrice     | None                       | >= 0            |
+| Production.Product            | ProductSubcategoryID |   ✅   | DimProduct | Join          | Join ProductSubcategory    | Orphan          |
+| Production.ProductSubcategory | Name                 |   ✅   | DimProduct | Subcategory   | Rename                     | NULL            |
+| Production.ProductSubcategory | ProductCategoryID    |   ✅   | DimProduct | Join          | Join ProductCategory       | Orphan          |
+| Production.ProductCategory    | Name                 |   ✅   | DimProduct | Category      | Rename                     | NULL            |
+
+---
+
+## DimTerritory
+
+| Source Table         | Source Column     | Used? | Gold Table   | Gold Column   | Transformation | Quality Check   |
+| -------------------- | ----------------- | :---: | ------------ | ------------- | -------------- | --------------- |
+| Sales.SalesTerritory | TerritoryID       |   ✅   | DimTerritory | TerritoryID   | None           | NULL, Duplicate |
+| Sales.SalesTerritory | Name              |   ✅   | DimTerritory | TerritoryName | TRIM           | NULL            |
+| Sales.SalesTerritory | CountryRegionCode |   ✅   | DimTerritory | Country       | Rename         | NULL            |
+| Sales.SalesTerritory | Group             |   ✅   | DimTerritory | Group         | Rename         | NULL            |
+
+---
+
+## DimSalesPerson
+
+| Source Table            | Source Column    | Used? | Gold Table     | Gold Column   | Transformation   | Quality Check   |
+| ----------------------- | ---------------- | :---: | -------------- | ------------- | ---------------- | --------------- |
+| Sales.SalesPerson       | BusinessEntityID |   ✅   | DimSalesPerson | SalesPersonID | None             | NULL, Duplicate |
+| Sales.SalesPerson       | TerritoryID      |   ✅   | DimSalesPerson | Join          | Lookup Territory | Orphan          |
+| HumanResources.Employee | BusinessEntityID |   ✅   | DimSalesPerson | Join          | Join Employee    | Duplicate       |
+| HumanResources.Employee | JobTitle         |   ✅   | DimSalesPerson | JobTitle      | TRIM             | NULL            |
+| Person.Person           | BusinessEntityID |   ✅   | DimSalesPerson | Join          | Join Person      | Duplicate       |
+| Person.Person           | FirstName        |   ✅   | DimSalesPerson | FullName      | Concatenate      | None            |
+| Person.Person           | LastName         |   ✅   | DimSalesPerson | FullName      | Concatenate      | None            |
+
+---
+
+## DimDate
+
+| Source Table | Source Column | Used? | Gold Table | Gold Column | Transformation    | Quality Check |
+| ------------ | ------------- | :---: | ---------- | ----------- | ----------------- | ------------- |
+| Generated    | Date          |   ✅   | DimDate    | DateKey     | YYYYMMDD          | Duplicate     |
+| Generated    | Date          |   ✅   | DimDate    | FullDate    | None              | NULL          |
+| Generated    | Date          |   ✅   | DimDate    | Day         | DAY()             | None          |
+| Generated    | Date          |   ✅   | DimDate    | Month       | MONTH()           | None          |
+| Generated    | Date          |   ✅   | DimDate    | MonthName   | DATENAME(MONTH)   | None          |
+| Generated    | Date          |   ✅   | DimDate    | Quarter     | DATEPART(QUARTER) | None          |
+| Generated    | Date          |   ✅   | DimDate    | Year        | YEAR()            | None          |
+| Generated    | Date          |   ✅   | DimDate    | DayOfWeek   | DATENAME(WEEKDAY) | None          |
+| Generated    | Date          |   ✅   | DimDate    | WeekOfYear  | DATEPART(WEEK)    | None          |
+
+---
+
+## FactSales
+
+| Source Table           | Source Column      | Used? | Gold Table | Gold Column        | 
+| ---------------------- | ------------------ | :---: | ---------- | ------------------ | 
+| Sales.SalesOrderHeader | SalesOrderID       |   ✅   | FactSales  | SalesOrderID       |
+| Sales.SalesOrderDetail | SalesOrderDetailID |   ✅   | FactSales  | SalesOrderDetailID | 
+| Sales.SalesOrderHeader | OrderDate          |   ✅   | FactSales  | DateKey            | 
+| Sales.SalesOrderHeader | CustomerID         |   ✅   | FactSales  | CustomerKey        | 
+| Sales.SalesOrderDetail | ProductID          |   ✅   | FactSales  | ProductKey         | 
+| Sales.SalesOrderHeader | SalesPersonID      |   ✅   | FactSales  | SalesPersonKey     | 
+| Sales.SalesOrderHeader | TerritoryID        |   ✅   | FactSales  | TerritoryKey       | 
+| Sales.SalesOrderDetail | OrderQty           |   ✅   | FactSales  | OrderQuantity      |
+| Sales.SalesOrderDetail | UnitPrice          |   ✅   | FactSales  | UnitPrice          |
+| Sales.SalesOrderDetail | UnitPriceDiscount  |   ✅   | FactSales  | UnitPriceDiscount  |	
+| Sales.SalesOrderDetail | LineTotal          |   ✅   | FactSales  | LineTotal          | 
+| Production.Product     | StandardCost       |   ✅   | FactSales  | TotalProductCost   | 
+| Calculated             | Profit             |   ✅   | FactSales  | Profit             | 
+
+---
+
+
+
+
